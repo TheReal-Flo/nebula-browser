@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.nebula-sidebar {
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  left: -250px;
+  transition: all .75s;
+}
+
+.nebula-sidebar-open {
+  -webkit-box-shadow: 4px 0px 8px 1px rgba(81, 81, 81, .5);
+  -moz-box-shadow: 4px 0px 8px 1px rgba(81, 81, 81, .5);
+  box-shadow: 4px 0px 8px 1px rgba(81, 81, 81, .5);
+  left: 0px;
+}
+
+.nebula-controls {
+  app-region: drag;
+}
+
+.nebula-urlbar {
+  app-region: drag;
+}
+
+.nebula-urlbar input {
+  app-region: no-drag
+}
+
+.nebula-newtab {
+  app-region: no-drag
+}
+
+.nebula-tab {
+  
+}
+
+.nebula-tab.active {
+  background-color: oklch(0.446 0.03 256.802);
+}
+
+.nebula-tab span {
+  flex-grow: 1;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.nebula-chat {
+  display: none;
+}
+
+.nebula-chat.active {
+  display: block;
+}
