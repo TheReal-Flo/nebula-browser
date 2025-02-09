@@ -325,7 +325,7 @@ function App(): JSX.Element {
         <div className={`nebula-chat ${aiChatOpen ? 'active' : ''} w-[35%]`}>
           <webview src="https://t3.chat/" className="w-full h-full"></webview>
         </div>
-        <div className={`nebula-chat ${localAiOpen ? 'active' : ''} w-[35%]`}>
+        <div className={`nebula-chat ${localAiOpen ? 'active' : ''} w-[35%] mw-[35%] mh-full`}>
           {aiResponse}
           <button
             className="nebula-aibutton rounded bg-gray-500 ml-[5px] p-1 hover:cursor-pointer hover:bg-gray-600 text-blue-400"
