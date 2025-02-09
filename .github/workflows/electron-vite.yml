@@ -1,0 +1,49 @@
+name: Electron-Vite CI
+
+on:
+  push:
+    branches:
+      - 'feature/*'
+  pull_request:
+    branches:
+      - 'feature/*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js with caching for npm dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Build the Electron-Vite application
+      - name: Build Application
+        run: npm run build
+
+      # Step 5: Package the Electron application
+      # Ensure you have a "dist" script defined in your package.json.
+      - name: Package Electron App
+        run: npm run build:win
+
+      # Step 6: Upload the packaged artifact as a workflow artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: packaged-electron-app
+          path: dist/*
