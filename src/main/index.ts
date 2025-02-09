@@ -2,8 +2,9 @@ import { app, shell, BrowserWindow, ipcMain, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { pipeline, TextStreamer } from '@huggingface/transformers'
 
-function createWindow(): void {
+async function createWindow(): Promise<void> {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -38,6 +39,28 @@ function createWindow(): void {
 
   ipcMain.on('maximize', () => {
     mainWindow.maximize()
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ipcMain.on('ai-request', async (_e, prompt) => {
+    console.log('Executing AI request...')
+    console.log(prompt)
+    // Create a text generation pipeline
+    const generator = await pipeline(
+      'text-generation',
+      'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',
+      { dtype: 'uint8' }
+    )
+
+    // Create text streamer
+    const streamer = new TextStreamer(generator.tokenizer, {
+      skip_prompt: true
+    })
+
+    // Generate a response
+    const output = await generator(prompt, { max_new_tokens: 512, do_sample: false, streamer })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mainWindow.webContents.send('ai-response', (output[0] as any).generated_text.at(-1).content)
   })
 
   globalShortcut.register('CommandOrControl+Shift+S', () => {

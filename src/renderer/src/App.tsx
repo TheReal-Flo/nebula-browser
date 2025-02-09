@@ -1,5 +1,5 @@
-import { Plus, ShieldAlert, ShieldCheck, X } from 'lucide-react'
-import React, { createRef, useEffect, useRef, useState } from 'react'
+import { Plus, ShieldAlert, ShieldCheck, Sparkles, X } from 'lucide-react'
+import React, { createRef, useEffect, useState } from 'react'
 
 interface TabItem {
   id: number
@@ -62,7 +62,8 @@ const TabWebview: React.FC<TabWebviewProps> = ({
 function App(): JSX.Element {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [aiChatOpen, setAiChatOpen] = useState(false)
-  const aiChatRef = useRef<HTMLWebViewElement>(null)
+  const [localAiOpen, setLocalAiOpen] = useState(false)
+  const [aiResponse, setAiResponse] = useState('')
   const [urlBar, setUrlBar] = useState<string>('')
   const [isUrlFocused, setIsUrlFocused] = useState(false)
   const [tabs, setTabs] = useState<TabItem[]>([
@@ -78,6 +79,10 @@ function App(): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   window.electron.ipcRenderer.on('sidebar', (_, _args) => {
     setSidebarOpen((prev) => !prev)
+  })
+
+  window.electron.ipcRenderer.on('ai-response', (_, _args) => {
+    setAiResponse(_args)
   })
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -294,6 +299,16 @@ function App(): JSX.Element {
         >
           <Plus />
         </button>
+        <button
+          className="nebula-aibutton rounded bg-gray-500 ml-[5px] p-1 hover:cursor-pointer hover:bg-gray-600 text-blue-400"
+          onClick={() => {
+            setLocalAiOpen((prev) => {
+              return !prev
+            })
+          }}
+        >
+          <Sparkles />
+        </button>
       </div>
 
       <div className="nebula-content flex align-center content-center flex-row w-full h-[calc(100vh-50px)]">
@@ -308,7 +323,20 @@ function App(): JSX.Element {
           />
         ))}
         <div className={`nebula-chat ${aiChatOpen ? 'active' : ''} w-[35%]`}>
-          <webview src="https://t3.chat/" className="w-full h-full" ref={aiChatRef}></webview>
+          <webview src="https://t3.chat/" className="w-full h-full"></webview>
+        </div>
+        <div className={`nebula-chat ${localAiOpen ? 'active' : ''} w-[35%]`}>
+          {aiResponse}
+          <button
+            className="nebula-aibutton rounded bg-gray-500 ml-[5px] p-1 hover:cursor-pointer hover:bg-gray-600 text-blue-400"
+            onClick={() => {
+              window.electron.ipcRenderer.send('ai-request', [
+                { role: 'user', content: 'Solve the equation: x^2 - 3x + 2 = 0' }
+              ])
+            }}
+          >
+            <Sparkles />
+          </button>
         </div>
       </div>
     </>
