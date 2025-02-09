@@ -1,4 +1,4 @@
-import { Plus, ShieldAlert, ShieldCheck, X } from 'lucide-react'
+import { Code, Plus, ShieldAlert, ShieldCheck, X } from 'lucide-react'
 import React, { createRef, useEffect, useRef, useState } from 'react'
 
 interface TabItem {
@@ -225,6 +225,17 @@ function App(): JSX.Element {
     setIsUrlFocused(false)
   }
 
+  // Function to open DevTools on the active webview
+  const openDevTools = (): void => {
+    const activeTabItem = tabs.find((tab) => tab.id === activeTab)
+    console.log(activeTabItem)
+    if (activeTabItem && activeTabItem.ref.current) {
+      // Casting to any because the ref's type might not have openDevTools in its type definitions.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (activeTabItem as any).ref.current.openDevTools()
+    }
+  }
+
   return (
     <>
       {/* Sidebar with tab list */}
@@ -293,6 +304,14 @@ function App(): JSX.Element {
           onClick={newTabHandler}
         >
           <Plus />
+        </button>
+        {/* DevTools Button */}
+        <button
+          className="nebula-devtools rounded bg-gray-500 ml-[5px] p-1 hover:cursor-pointer hover:bg-gray-600"
+          onClick={openDevTools}
+          title="Open DevTools"
+        >
+          <Code />
         </button>
       </div>
 
