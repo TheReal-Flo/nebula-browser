@@ -1,7 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, globalShortcut, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { ElectronBlocker } from '@ghostery/adblocker-electron'
 
 function createWindow(): void {
   // Create the browser window.
@@ -50,6 +51,10 @@ function createWindow(): void {
 
   globalShortcut.register('CommandOrControl+Shift+C', () => {
     mainWindow.webContents.send('copy-url')
+  })
+
+  ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
+    blocker.enableBlockingInSession(session.defaultSession)
   })
 
   // HMR for renderer base on electron-vite cli.
