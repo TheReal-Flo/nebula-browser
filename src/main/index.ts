@@ -21,12 +21,21 @@ interface Tabs {
   [key: string]: BrowserView
 }
 
+// New interface for tracking which tab belongs to which window.
+interface TabToWindowMapping {
+  [key: string]: number
+}
+
 const sidebarState = {}
 
 const windows: Windows = {}
 const tabs: Tabs = {}
+// This mapping tracks each BrowserView by its tab id to the BrowserWindow id it
+// is associated with.
+const tabToWindow: TabToWindowMapping = {}
 
-function broadcast(channel, ...args): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function broadcast(channel: string, ...args: any[]): void {
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send(channel, ...args)
   })
@@ -34,8 +43,8 @@ function broadcast(channel, ...args): void {
 
 // Create new windows on demand.
 function createWindow(): void {
-  // Generate a unique ID for the new window.
-  const windowId = Math.random().toString(36).substr(2, 9)
+  // Generate a unique key for our windows dictionary.
+  const windowKey = Math.random().toString(36).substr(2, 9)
 
   const window = new BrowserWindow({
     width: 900,
@@ -50,6 +59,7 @@ function createWindow(): void {
     }
   })
 
+  // We are using the Electron-generated window.id for our mapping.
   sidebarState[window.id] = false
 
   window.on('ready-to-show', () => {
@@ -69,10 +79,20 @@ function createWindow(): void {
     window.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
-  windows[windowId] = window
-  // Handle window close.
+  windows[windowKey] = window
+
+  // Always clean up the window entry and also remove any tab associations
+  // that pertain to this window when it is closed.
   window.on('closed', () => {
-    delete windows[windowId]
+    // Clean tab mappings that reference this window.
+    for (const tab in tabToWindow) {
+      if (tabToWindow[tab] === window.id) {
+        delete tabToWindow[tab]
+        // Optionally, you might also want to remove the BrowserView itself:
+        delete tabs[tab]
+      }
+    }
+    delete windows[windowKey]
   })
 }
 
@@ -137,27 +157,32 @@ app.whenReady().then(() => {
 
   ipcMain.on('request-tab', (_e, data) => {
     const focusedWindow = BrowserWindow.getFocusedWindow()
-    if (focusedWindow) focusedWindow.setBrowserView(tabs[data])
-    tabs[data].setAutoResize({
-      width: true,
-      height: true
-    })
-    tabs[data].setBounds({
-      x: sidebarState[focusedWindow?.id || 0] ? 250 : 0,
-      y: 50,
-      width:
-        (focusedWindow?.getBounds().width || 0) - (sidebarState[focusedWindow?.id || 0] ? 250 : 0),
-      height: (focusedWindow?.getBounds().height || 0) - 50
-    })
+    if (focusedWindow) {
+      // Assign the BrowserView to the focused window.
+      focusedWindow.setBrowserView(tabs[data])
+      // Update the association mapping.
+      tabToWindow[data] = focusedWindow.id
 
-    focusedWindow?.webContents.send(
-      'tab-data',
-      JSON.stringify({
-        id: data,
-        url: tabs[data].webContents.getURL(),
-        title: tabs[data].webContents.getTitle()
+      tabs[data].setAutoResize({
+        width: true,
+        height: true
       })
-    )
+      tabs[data].setBounds({
+        x: sidebarState[focusedWindow.id] ? 250 : 0,
+        y: 50,
+        width: (focusedWindow.getBounds().width || 0) - (sidebarState[focusedWindow.id] ? 250 : 0),
+        height: (focusedWindow.getBounds().height || 0) - 50
+      })
+
+      focusedWindow.webContents.send(
+        'tab-data',
+        JSON.stringify({
+          id: data,
+          url: tabs[data].webContents.getURL(),
+          title: tabs[data].webContents.getTitle()
+        })
+      )
+    }
   })
 
   ipcMain.on('navigate-to', (_e, _data) => {
@@ -168,6 +193,8 @@ app.whenReady().then(() => {
 
   ipcMain.on('close-tab', (_e, _data) => {
     delete tabs[_data]
+    // Remove the mapping for the closed tab.
+    delete tabToWindow[_data]
   })
 
   ipcMain.on('new-tab', (_e, _data) => {
@@ -176,6 +203,11 @@ app.whenReady().then(() => {
     console.log(`New Tab with id ${tabId} has been created.`)
 
     const focusedWindow = BrowserWindow.getFocusedWindow()
+
+    // When a tab is created, optionally track its initial window.
+    if (focusedWindow) {
+      tabToWindow[tabId] = focusedWindow.id
+    }
 
     const view = new BrowserView()
     view.webContents.loadURL(_data)

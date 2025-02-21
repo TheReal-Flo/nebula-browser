@@ -144,6 +144,11 @@ function App(): JSX.Element {
 
   const closeTab = (tabId: string): void => {
     if (activeTab === tabId) {
+      if (tabKeys.length <= 1) {
+        window.electron.ipcRenderer.send('close-tab', tabId)
+        window.electron.ipcRenderer.send('close-window')
+      }
+
       const newActiveTab = tabKeys[tabKeys.indexOf(tabId) - 1] || tabKeys[0]
       setActiveTab(newActiveTab)
       setTabs((prevTabs) => {
