@@ -17,29 +17,29 @@ Nebula-Browser is an open-source, Electron-based AI browser optimized for develo
 
 ## Features
 
-- **AI-Powered Assistance:**  
+- **AI-Powered Assistance:**
   Get intelligent code suggestions, contextual documentation lookups, and debugging tips right within your browser.
 
-- **Optimized UI:**  
+- **Optimized UI:**
   A minimal and configurable interface designed to reduce distractions and enhance productivity.
 
-- **Cross-Platform Compatibility:**  
+- **Cross-Platform Compatibility:**
   Built on Electron, Nebula-Browser runs seamlessly on Windows, macOS, and Linux.
 
-- **Extensible Plugin System:**  
+- **Extensible Plugin System:**
   Easily extend the functionality with community-driven plugins and custom integrations.
 
 ### Planned features (not in priority order):
 
-[x] Basic browser features (tabs, browserview etc.)
-[x] Sideview integrated AI chat (https://t3.chat) (open with Ctrl/Command + Shift + T)
-[ ] Browser history
-[ ] Bookmarks
-[ ] Favorites
-[ ] Context-aware AI assistant
-[ ] Password-manager
-[ ] Chrome-Extensions
-[ ] Integrated ad-block
+- [x] Basic browser features (tabs, browserview etc.)
+- [x] Sideview integrated AI chat (https://t3.chat) (open with Ctrl/Command + Shift + T)
+- [ ] Browser history
+- [ ] Bookmarks
+- [ ] Favorites
+- [ ] Context-aware AI assistant
+- [ ] Password-manager
+- [ ] Chrome-Extensions
+- [x] Integrated ad-block
 
 ---
 
@@ -47,9 +47,9 @@ Nebula-Browser is an open-source, Electron-based AI browser optimized for develo
 
 ### Prerequisites
 
-- **Node.js & npm:**  
+- **Node.js & npm:**
   Make sure you have the latest [Node.js LTS version](https://nodejs.org/) installed.
-- **Git:**  
+- **Git:**
   Required for cloning the repository.
 
 ### Cloning the Repository
@@ -99,17 +99,17 @@ This command creates an optimized build for your current platform.
 
 We welcome contributions to Nebula-Browser! To contribute:
 
-1. **Fork the Repository:**  
+1. **Fork the Repository:**
    Click the fork button on GitHub to create your own copy of the project.
 
-2. **Create a New Branch:**  
+2. **Create a New Branch:**
    Develop your feature or bug fix on a new branch:
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
-3. **Submit a Pull Request:**  
+3. **Submit a Pull Request:**
    Once your changes are ready, submit a pull request detailing your modifications and why they should be merged.
 
 For major changes, please open an issue first to discuss your ideas.
