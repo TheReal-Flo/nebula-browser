@@ -166,6 +166,10 @@ app.whenReady().then(() => {
     tabs[data.tabId].webContents.loadURL(data.url)
   })
 
+  ipcMain.on('close-tab', (_e, _data) => {
+    delete tabs[_data]
+  })
+
   ipcMain.on('new-tab', (_e, _data) => {
     const tabId = Math.random().toString(36).substr(2, 9)
 

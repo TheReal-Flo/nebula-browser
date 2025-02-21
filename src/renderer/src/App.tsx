@@ -143,6 +143,21 @@ function App(): JSX.Element {
   }
 
   const closeTab = (tabId: string): void => {
+    if (activeTab === tabId) {
+      const newActiveTab = tabKeys[tabKeys.indexOf(tabId) - 1] || tabKeys[0]
+      setActiveTab(newActiveTab)
+      setTabs((prevTabs) => {
+        const newTabs = { ...prevTabs }
+        delete newTabs[tabId]
+        return newTabs
+      })
+    } else {
+      setTabs((prevTabs) => {
+        const newTabs = { ...prevTabs }
+        delete newTabs[tabId]
+        return newTabs
+      })
+    }
     window.electron.ipcRenderer.send('close-tab', tabId)
   }
 
@@ -166,27 +181,30 @@ function App(): JSX.Element {
         </button>
         <hr className="w-full" />
         {tabs &&
-          tabKeys.map((tabId) => (
-            <div
-              key={tabId}
-              className="flex align-center content-center flex-row max-w-[100%] w-[100%] h-[40px] mt-[5px] rounded flex items-center justify-center"
-            >
-              <button
-                className={`nebula-tab flex align-center content-center flex-row flex-grow max-w-[80%] w-[80%] h-[40px] m-[10px] p-[5px] rounded flex items-center justify-center bg-gray-500 text-xs hover:cursor-pointer hover:bg-gray-600 ${
-                  activeTab === tabId ? 'active' : ''
-                }`}
-                onClick={() => setActiveTab(tabId)}
-              >
-                <span>{tabs[tabId].title}</span>
-              </button>
-              <button
-                className="rounded border-1 border-gray-400 hover:cursor-pointer hover:bg-gray-600"
-                onClick={() => closeTab(tabId)}
-              >
-                <X />
-              </button>
-            </div>
-          ))}
+          tabKeys.map(
+            (tabId) =>
+              tabs[tabId] && (
+                <div
+                  key={tabId}
+                  className="flex align-center content-center flex-row max-w-[100%] w-[100%] h-[40px] mt-[5px] rounded flex items-center justify-center"
+                >
+                  <button
+                    className={`nebula-tab flex align-center content-center flex-row flex-grow max-w-[80%] w-[80%] h-[40px] m-[10px] p-[5px] rounded flex items-center justify-center bg-gray-500 text-xs hover:cursor-pointer hover:bg-gray-600 ${
+                      activeTab === tabId ? 'active' : ''
+                    }`}
+                    onClick={() => setActiveTab(tabId)}
+                  >
+                    <span>{tabs[tabId].title}</span>
+                  </button>
+                  <button
+                    className="rounded border-1 border-gray-400 hover:cursor-pointer hover:bg-gray-600"
+                    onClick={() => closeTab(tabId)}
+                  >
+                    <X />
+                  </button>
+                </div>
+              )
+          )}
         <span className="flex-grow"></span>
       </div>
 
