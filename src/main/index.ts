@@ -1,12 +1,20 @@
-import { app, shell, BrowserWindow, ipcMain, globalShortcut, session } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  session,
+  Menu // import Menu from electron
+} from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { ElectronBlocker } from '@ghostery/adblocker-electron'
 
+// Create new windows on demand.
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  const window = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -20,88 +28,105 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+  window.on('ready-to-show', () => {
+    window.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  // Open external links in the default browser.
+  window.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
-  ipcMain.on('close', () => {
-    mainWindow.close()
-  })
-
-  ipcMain.on('minimize', () => {
-    mainWindow.minimize()
-  })
-
-  ipcMain.on('maximize', () => {
-    mainWindow.maximize()
-  })
-
-  globalShortcut.register('CommandOrControl+Shift+S', () => {
-    mainWindow.webContents.send('sidebar')
-  })
-
-  globalShortcut.register('CommandOrControl+Shift+T', () => {
-    mainWindow.webContents.send('ai-chat')
-  })
-
-  globalShortcut.register('CommandOrControl+Shift+C', () => {
-    mainWindow.webContents.send('copy-url')
-  })
-
-  ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
-    blocker.enableBlockingInSession(session.defaultSession)
-  })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
+  // Load the renderer URL or local file.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    window.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    window.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// When the app is ready, set everything up.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // Create the initial window.
   createWindow()
 
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
+  // Set up Dock menu on macOS with a "New Window" option.
+  if (process.platform === 'darwin' && app.dock) {
+    const dockMenu = Menu.buildFromTemplate([
+      {
+        label: 'New Window',
+        click: (): void => {
+          createWindow()
+        }
+      },
+      { role: 'quit' }
+    ])
+    app.dock.setMenu(dockMenu)
+  }
+
+  // Handle "activate" for macOS (reopen window when clicking dock icon).
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+
+  // Handle renderer requests for a new window.
+  ipcMain.on('new-window', () => {
+    createWindow()
+  })
+
+  // Use the event sender's window for close, minimize, and maximize.
+  ipcMain.on('close-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window) window.close()
+  })
+
+  ipcMain.on('minimize-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window) window.minimize()
+  })
+
+  ipcMain.on('maximize-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window) window.isMaximized() ? window.unmaximize() : window.maximize()
+  })
+
+  // Global shortcuts now send messages to the focused window.
+  globalShortcut.register('CommandOrControl+Shift+S', () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (focusedWindow) focusedWindow.webContents.send('sidebar')
+  })
+
+  globalShortcut.register('CommandOrControl+Shift+T', () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (focusedWindow) focusedWindow.webContents.send('ai-chat')
+  })
+
+  globalShortcut.register('CommandOrControl+Shift+C', () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (focusedWindow) focusedWindow.webContents.send('copy-url')
+  })
+
+  // Enable ad blocking.
+  ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
+    blocker.enableBlockingInSession(session.defaultSession)
   })
 })
 
+// Unregister all shortcuts when quitting.
 app.on('will-quit', () => {
-  // Unregister all shortcuts.
   globalShortcut.unregisterAll()
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Quit the app when all windows are closed (except on macOS).
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
