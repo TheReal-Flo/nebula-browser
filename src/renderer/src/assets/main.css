@@ -10,7 +10,6 @@
   -moz-box-shadow: none;
   box-shadow: none;
   left: -250px;
-  transition: all .75s;
 }
 
 .nebula-sidebar-open {
@@ -37,7 +36,7 @@
 }
 
 .nebula-tab {
-  
+
 }
 
 .nebula-tab.active {
