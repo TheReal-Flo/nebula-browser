@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Plus, ShieldAlert, ShieldCheck, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+import { bangs } from './data/bangs'
 
 interface TabItems {
   [key: string]: {
@@ -16,6 +17,30 @@ function App(): JSX.Element {
   const [tabs, setTabs] = useState<TabItems>({})
   const [activeTab, setActiveTab] = useState<string>('')
   const [tabKeys, setTabKeys] = useState<string[]>([])
+
+  const LS_DEFAULT_BANG = localStorage.getItem('default-bang') ?? 'g'
+  const defaultBang = bangs.find((b) => b.t === LS_DEFAULT_BANG)
+
+  function getBangredirectUrl(query: string): string {
+    const match = query.match(/!(\S+)/i)
+
+    const bangCandidate = match?.[1]?.toLowerCase()
+    const selectedBang = bangs.find((b) => b.t === bangCandidate) ?? defaultBang
+
+    // Remove the first bang from the query
+    const cleanQuery = query.replace(/!\S+\s*/i, '').trim()
+
+    // Format of the url is:
+    // https://www.google.com/search?q={{{s}}}
+    const searchUrl = selectedBang?.u.replace(
+      '{{{s}}}',
+      // Replace %2F with / to fix formats like "!ghr+t3dotgg/unduck"
+      encodeURIComponent(cleanQuery).replace(/%2F/g, '/')
+    )
+    if (!searchUrl) return ''
+
+    return searchUrl
+  }
 
   useEffect(() => {
     newTab()
@@ -114,7 +139,7 @@ function App(): JSX.Element {
       }
     }
     // If it includes spaces or isn't a URL, perform a search with Google.
-    return `https://www.google.com/search?q=${encodeURIComponent(input)}`
+    return getBangredirectUrl(input)
   }
 
   const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
